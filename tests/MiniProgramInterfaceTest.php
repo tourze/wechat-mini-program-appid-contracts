@@ -7,26 +7,41 @@ use Tourze\WechatMiniProgramAppIDContracts\MiniProgramInterface;
 
 class MiniProgramInterfaceTest extends TestCase
 {
-    /**
-     * 测试getAppId方法返回字符串类型
-     */
-    public function testGetAppId_returnsString(): void
+    private function createTestMiniProgram(): MiniProgramInterface
     {
-        $miniProgram = $this->createMock(MiniProgramInterface::class);
-        $miniProgram->method('getAppId')->willReturn('wx123456789abc');
-        
-        $this->assertIsString($miniProgram->getAppId());
+        return new class implements MiniProgramInterface {
+            public function getAppId(): string
+            {
+                return 'wx123456789abc';
+            }
+            
+            public function getAppSecret(): string
+            {
+                return 'abcdef123456789';
+            }
+        };
     }
     
     /**
-     * 测试getAppSecret方法返回字符串类型
+     * 测试getAppId方法返回的值符合预期
      */
-    public function testGetAppSecret_returnsString(): void
+    public function testGetAppId_returnsExpectedValue(): void
     {
-        $miniProgram = $this->createMock(MiniProgramInterface::class);
-        $miniProgram->method('getAppSecret')->willReturn('abcdef123456789');
+        $miniProgram = $this->createTestMiniProgram();
         
-        $this->assertIsString($miniProgram->getAppSecret());
+        $result = $miniProgram->getAppId();
+        $this->assertSame('wx123456789abc', $result);
+    }
+    
+    /**
+     * 测试getAppSecret方法返回的值符合预期
+     */
+    public function testGetAppSecret_returnsExpectedValue(): void
+    {
+        $miniProgram = $this->createTestMiniProgram();
+        
+        $result = $miniProgram->getAppSecret();
+        $this->assertSame('abcdef123456789', $result);
     }
     
     /**
@@ -34,8 +49,7 @@ class MiniProgramInterfaceTest extends TestCase
      */
     public function testGetAppId_notEmpty(): void
     {
-        $miniProgram = $this->createMock(MiniProgramInterface::class);
-        $miniProgram->method('getAppId')->willReturn('wx123456789abc');
+        $miniProgram = $this->createTestMiniProgram();
         
         $this->assertNotEmpty($miniProgram->getAppId());
     }
@@ -45,8 +59,7 @@ class MiniProgramInterfaceTest extends TestCase
      */
     public function testGetAppSecret_notEmpty(): void
     {
-        $miniProgram = $this->createMock(MiniProgramInterface::class);
-        $miniProgram->method('getAppSecret')->willReturn('abcdef123456789');
+        $miniProgram = $this->createTestMiniProgram();
         
         $this->assertNotEmpty($miniProgram->getAppSecret());
     }

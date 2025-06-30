@@ -8,16 +8,31 @@ use Tourze\WechatMiniProgramAppIDContracts\MiniProgramLoaderInterface;
 
 class MiniProgramLoaderInterfaceTest extends TestCase
 {
-    /**
-     * 创建一个具体的MiniProgramInterface实现用于测试
-     */
-    private function createMiniProgramMock(): MiniProgramInterface
+    private function createTestLoader(): MiniProgramLoaderInterface
     {
-        $miniProgram = $this->createMock(MiniProgramInterface::class);
-        $miniProgram->method('getAppId')->willReturn('wx123456789abc');
-        $miniProgram->method('getAppSecret')->willReturn('abcdef123456789');
-        
-        return $miniProgram;
+        return new class implements MiniProgramLoaderInterface {
+            private array $users = [];
+            
+            public function __construct()
+            {
+                $this->users['valid_open_id'] = new class implements MiniProgramInterface {
+                    public function getAppId(): string
+                    {
+                        return 'wx123456789abc';
+                    }
+                    
+                    public function getAppSecret(): string
+                    {
+                        return 'abcdef123456789';
+                    }
+                };
+            }
+            
+            public function loadUserByAppId(string $openId): ?MiniProgramInterface
+            {
+                return $this->users[$openId] ?? null;
+            }
+        };
     }
     
     /**
@@ -25,12 +40,7 @@ class MiniProgramLoaderInterfaceTest extends TestCase
      */
     public function testLoadUserByAppId_withValidOpenId(): void
     {
-        $miniProgram = $this->createMiniProgramMock();
-        
-        $loader = $this->createMock(MiniProgramLoaderInterface::class);
-        $loader->method('loadUserByAppId')
-            ->with('valid_open_id')
-            ->willReturn($miniProgram);
+        $loader = $this->createTestLoader();
         
         $result = $loader->loadUserByAppId('valid_open_id');
         
@@ -42,10 +52,7 @@ class MiniProgramLoaderInterfaceTest extends TestCase
      */
     public function testLoadUserByAppId_withInvalidOpenId(): void
     {
-        $loader = $this->createMock(MiniProgramLoaderInterface::class);
-        $loader->method('loadUserByAppId')
-            ->with('invalid_open_id')
-            ->willReturn(null);
+        $loader = $this->createTestLoader();
         
         $result = $loader->loadUserByAppId('invalid_open_id');
         
@@ -57,10 +64,7 @@ class MiniProgramLoaderInterfaceTest extends TestCase
      */
     public function testLoadUserByAppId_withEmptyOpenId(): void
     {
-        $loader = $this->createMock(MiniProgramLoaderInterface::class);
-        $loader->method('loadUserByAppId')
-            ->with('')
-            ->willReturn(null);
+        $loader = $this->createTestLoader();
         
         $result = $loader->loadUserByAppId('');
         
@@ -72,16 +76,7 @@ class MiniProgramLoaderInterfaceTest extends TestCase
      */
     public function testLoadUserByAppId_returnsCorrectType(): void
     {
-        $miniProgram = $this->createMiniProgramMock();
-        
-        $loader = $this->createMock(MiniProgramLoaderInterface::class);
-        $loader->method('loadUserByAppId')
-            ->willReturnCallback(function (string $openId) use ($miniProgram) {
-                if ($openId === 'valid_open_id') {
-                    return $miniProgram;
-                }
-                return null;
-            });
+        $loader = $this->createTestLoader();
         
         // 有效openId应返回MiniProgramInterface实例
         $result1 = $loader->loadUserByAppId('valid_open_id');
